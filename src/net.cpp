@@ -2020,14 +2020,28 @@ void CConnman::ThreadMessageHandler()
                 continue;
 
             // Receive messages
+            std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+            std::cout << pnode->GetId() << " start ProcessMessages" << std::endl;
             bool fMoreNodeWork = m_msgproc->ProcessMessages(pnode, flagInterruptMsgProc);
+            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+            //if (duration > 0) {
+                std::cout << pnode->GetId() << " ProcessMessages duration: " << duration << std::endl;
+            //}
             fMoreWork |= (fMoreNodeWork && !pnode->fPauseSend);
             if (flagInterruptMsgProc)
                 return;
             // Send messages
             {
                 LOCK(pnode->cs_sendProcessing);
+                t1 = std::chrono::high_resolution_clock::now();
+                std::cout << pnode->GetId() << " start SendMessages" << std::endl;
                 m_msgproc->SendMessages(pnode, flagInterruptMsgProc);
+                t2 = std::chrono::high_resolution_clock::now();
+                duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+                //if (duration > 0) {
+                    std::cout << pnode->GetId() << " SendMessages duration: " << duration << std::endl;
+                //}
             }
 
             if (flagInterruptMsgProc)
