@@ -157,6 +157,7 @@ bool AppInit(int argc, char* argv[])
             // If locking the data directory failed, exit immediately
             return false;
         }
+        InitDebugFile(gArgs.GetArg("-debug-file", ""));
         fRet = AppInitMain();
     }
     catch (const std::exception& e) {
@@ -164,7 +165,6 @@ bool AppInit(int argc, char* argv[])
     } catch (...) {
         PrintExceptionContinue(nullptr, "AppInit()");
     }
-
     if (!fRet)
     {
         Interrupt();

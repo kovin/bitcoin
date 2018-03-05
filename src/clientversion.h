@@ -35,6 +35,9 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+#include <fstream>
+
 static const int CLIENT_VERSION =
                            1000000 * CLIENT_VERSION_MAJOR
                          +   10000 * CLIENT_VERSION_MINOR
@@ -49,5 +52,25 @@ std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 
 #endif // WINDRES_PREPROC
+
+extern bool using_debug;
+extern std::ofstream debug_file_handler;
+
+void InitDebugFile(const std::string& debug_file);
+
+#define LogToDebugFile(...) do { \
+    if (using_debug) { \
+        std::string _log_for_debug_file_; /* Unlikely name to avoid shadowing variables */ \
+        try { \
+            _log_for_debug_file_ = tfm::format(__VA_ARGS__); \
+        } catch (tinyformat::format_error &fmterr) { \
+            /* Original format string will have newline so don't add one here */ \
+            _log_for_debug_file_ = "Error \"" + std::string(fmterr.what()) + "\" while formatting log message: " + FormatStringFromLogArgs(__VA_ARGS__); \
+        } \
+        debug_file_handler << _log_for_debug_file_ << std::endl << std::flush; \
+    } \
+} while (0);
+
+void CloseDebugFile();
 
 #endif // BITCOIN_CLIENTVERSION_H

@@ -277,6 +277,7 @@ void Shutdown()
     globalVerifyHandle.reset();
     ECC_Stop();
     LogPrintf("%s: done\n", __func__);
+    CloseDebugFile();
 }
 
 /**

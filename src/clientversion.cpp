@@ -100,3 +100,21 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
     ss << "/";
     return ss.str();
 }
+
+bool using_debug = false;
+std::ofstream debug_file_handler;
+
+void InitDebugFile(const std::string& debug_file)
+{
+    using_debug = debug_file != "";
+    if (using_debug) {
+        debug_file_handler.open(debug_file.c_str());
+    }
+}
+
+void CloseDebugFile()
+{
+    if (using_debug) {
+        debug_file_handler.close();
+    }
+}
