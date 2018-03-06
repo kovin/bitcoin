@@ -1517,7 +1517,6 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
 
 bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, int64_t nTimeReceived, const CChainParams& chainparams, CConnman* connman, const std::atomic<bool>& interruptMsgProc)
 {
-    LogToDebugFile("%d < %s (%u bytes)", SanitizeString(strCommand), vRecv.size(), pfrom->GetId());
     LogPrint(BCLog::NET, "received: %s (%u bytes) peer=%d\n", SanitizeString(strCommand), vRecv.size(), pfrom->GetId());
     if (gArgs.IsArgSet("-dropmessagestest") && GetRand(gArgs.GetArg("-dropmessagestest", 0)) == 0)
     {
@@ -1542,6 +1541,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     if (strCommand == NetMsgType::REJECT)
     {
+        LogToDebugFile("%d < reject (%d bytes)", pfrom->GetId(), vRecv.size());
         if (LogAcceptCategory(BCLog::NET)) {
             try {
                 std::string strMsg; unsigned char ccode; std::string strReason;
@@ -1566,6 +1566,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::VERSION)
     {
+        LogToDebugFile("%d < version (%d bytes)", pfrom->GetId(), vRecv.size());
         // Each connection can only send one version message
         if (pfrom->nVersion != 0)
         {
@@ -1760,7 +1761,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     if (strCommand == NetMsgType::VERACK)
     {
-        LogToDebugFile("%d > verack", pfrom->GetId());
+        LogToDebugFile("%d < verack (%d bytes)", pfrom->GetId(), vRecv.size());
         pfrom->SetRecvVersion(std::min(pfrom->nVersion.load(), PROTOCOL_VERSION));
 
         if (!pfrom->fInbound) {
@@ -1809,7 +1810,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::ADDR)
     {
-        LogToDebugFile("%d > addr", pfrom->GetId());
+        LogToDebugFile("%d < addr (%d bytes)", pfrom->GetId(), vRecv.size());
         std::vector<CAddress> vAddr;
         vRecv >> vAddr;
 
@@ -1860,14 +1861,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::SENDHEADERS)
     {
-        LogToDebugFile("%d > sendheaders", pfrom->GetId());
+        LogToDebugFile("%d < sendheaders (%d bytes)", pfrom->GetId(), vRecv.size());
         LOCK(cs_main);
         State(pfrom->GetId())->fPreferHeaders = true;
     }
 
     else if (strCommand == NetMsgType::SENDCMPCT)
     {
-        LogToDebugFile("%d > sendcmpct", pfrom->GetId());
+        LogToDebugFile("%d < sendcmpct (%d bytes)", pfrom->GetId(), vRecv.size());
         bool fAnnounceUsingCMPCTBLOCK = false;
         uint64_t nCMPCTBLOCKVersion = 0;
         vRecv >> fAnnounceUsingCMPCTBLOCK >> nCMPCTBLOCKVersion;
@@ -1892,7 +1893,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::INV)
     {
-        LogToDebugFile("%d > inv", pfrom->GetId());
+        LogToDebugFile("%d < inv (%d bytes)", pfrom->GetId(), vRecv.size());
         std::vector<CInv> vInv;
         vRecv >> vInv;
         if (vInv.size() > MAX_INV_SZ)
@@ -1955,7 +1956,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::GETDATA)
     {
-        LogToDebugFile("%d > getdata", pfrom->GetId());
+        LogToDebugFile("%d < getdata (%d bytes)", pfrom->GetId(), vRecv.size());
         std::vector<CInv> vInv;
         vRecv >> vInv;
         if (vInv.size() > MAX_INV_SZ)
@@ -1978,7 +1979,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::GETBLOCKS)
     {
-        LogToDebugFile("%d > getblocks", pfrom->GetId());
+        LogToDebugFile("%d < getblocks (%d bytes)", pfrom->GetId(), vRecv.size());
         CBlockLocator locator;
         uint256 hashStop;
         vRecv >> locator >> hashStop;
@@ -2040,7 +2041,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::GETBLOCKTXN)
     {
-        LogToDebugFile("%d > getblocktxn", pfrom->GetId());
+        LogToDebugFile("%d < getblocktxn (%d bytes)", pfrom->GetId(), vRecv.size());
         BlockTransactionsRequest req;
         vRecv >> req;
 
@@ -2091,7 +2092,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::GETHEADERS)
     {
-        LogToDebugFile("%d > getheaders", pfrom->GetId());
+        LogToDebugFile("%d < getheaders (%d bytes)", pfrom->GetId(), vRecv.size());
         CBlockLocator locator;
         uint256 hashStop;
         vRecv >> locator >> hashStop;
@@ -2155,7 +2156,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::TX)
     {
-        LogToDebugFile("%d > tx", pfrom->GetId());
+        LogToDebugFile("%d < tx (%d bytes)", pfrom->GetId(), vRecv.size());
         // Stop processing the transaction early if
         // We are in blocks only mode and peer is either not whitelisted or whitelistrelay is off
         if (!fRelayTxes && (!pfrom->fWhitelisted || !gArgs.GetBoolArg("-whitelistrelay", DEFAULT_WHITELISTRELAY)))
@@ -2345,6 +2346,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::CMPCTBLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        LogToDebugFile("%d < cmptblock (%d bytes)", pfrom->GetId(), vRecv.size());
         CBlockHeaderAndShortTxIDs cmpctblock;
         vRecv >> cmpctblock;
 
@@ -2570,6 +2572,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::BLOCKTXN && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        LogToDebugFile("%d < blocktxn (%d bytes)", pfrom->GetId(), vRecv.size());
         BlockTransactions resp;
         vRecv >> resp;
 
@@ -2645,6 +2648,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::HEADERS && !fImporting && !fReindex) // Ignore headers received while importing
     {
+        LogToDebugFile("%d < headers (%d bytes)", pfrom->GetId(), vRecv.size());
         std::vector<CBlockHeader> headers;
 
         // Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
@@ -2672,7 +2676,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     {
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
-
+        LogToDebugFile("%d < block (%d bytes)", pfrom->GetId(), vRecv.size());
         LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
 
         bool forceProcessing = false;
@@ -2699,7 +2703,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::GETADDR)
     {
-        LogToDebugFile("%d > getaddr", pfrom->GetId());
+        LogToDebugFile("%d < getaddr (%d bytes)", pfrom->GetId(), vRecv.size());
         // This asymmetric behavior for inbound and outbound connections was introduced
         // to prevent a fingerprinting attack: an attacker can send specific fake addresses
         // to users' AddrMan and later request them by sending getaddr messages.
@@ -2728,7 +2732,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::MEMPOOL)
     {
-        LogToDebugFile("%d > mempool", pfrom->GetId());
+        LogToDebugFile("%d < mempool (%d bytes)", pfrom->GetId(), vRecv.size());
         if (!(pfrom->GetLocalServices() & NODE_BLOOM) && !pfrom->fWhitelisted)
         {
             LogPrint(BCLog::NET, "mempool request with bloom filters disabled, disconnect peer=%d\n", pfrom->GetId());
@@ -2750,7 +2754,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::PING)
     {
-        LogToDebugFile("%d > ping", pfrom->GetId());
+        LogToDebugFile("%d < ping", pfrom->GetId());
         if (pfrom->nVersion > BIP0031_VERSION)
         {
             uint64_t nonce = 0;
@@ -2767,14 +2771,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // seconds to respond to each, the 5th ping the remote sends would appear to
             // return very quickly.
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::PONG, nonce));
-            LogToDebugFile("%d > pong", pfrom->GetId());
+            LogToDebugFile("%d > pong (%d bytes)", pfrom->GetId(), vRecv.size());
         }
     }
 
 
     else if (strCommand == NetMsgType::PONG)
     {
-        LogToDebugFile("%d > pong", pfrom->GetId());
+        LogToDebugFile("%d < pong (%d bytes)", pfrom->GetId(), vRecv.size());
         int64_t pingUsecEnd = nTimeReceived;
         uint64_t nonce = 0;
         size_t nAvail = vRecv.in_avail();
@@ -2832,7 +2836,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::FILTERLOAD)
     {
-        LogToDebugFile("%d > filterload", pfrom->GetId());
+        LogToDebugFile("%d < filterload (%d bytes)", pfrom->GetId(), vRecv.size());
         CBloomFilter filter;
         vRecv >> filter;
 
@@ -2854,7 +2858,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::FILTERADD)
     {
-        LogToDebugFile("%d > filteradd", pfrom->GetId());
+        LogToDebugFile("%d < filteradd (%d bytes)", pfrom->GetId(), vRecv.size());
         std::vector<unsigned char> vData;
         vRecv >> vData;
 
@@ -2880,7 +2884,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::FILTERCLEAR)
     {
-        LogToDebugFile("%d > filterclear", pfrom->GetId());
+        LogToDebugFile("%d < filterclear (%d bytes)", pfrom->GetId(), vRecv.size());
         LOCK(pfrom->cs_filter);
         if (pfrom->GetLocalServices() & NODE_BLOOM) {
             pfrom->pfilter.reset(new CBloomFilter());
@@ -2889,6 +2893,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
     else if (strCommand == NetMsgType::FEEFILTER) {
+        LogToDebugFile("%d < feefilter (%d bytes)", pfrom->GetId(), vRecv.size());
         CAmount newFeeFilter = 0;
         vRecv >> newFeeFilter;
         if (MoneyRange(newFeeFilter)) {
@@ -2901,12 +2906,13 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
     else if (strCommand == NetMsgType::NOTFOUND) {
-        LogToDebugFile("%d > notfound", pfrom->GetId());
+        LogToDebugFile("%d < notfound (%d bytes)", pfrom->GetId(), vRecv.size());
         // We do not care about the NOTFOUND message, but logging an Unknown Command
         // message would be undesirable as we transmit it ourselves.
     }
 
     else {
+        LogToDebugFile("%d < unknown (%d bytes)", pfrom->GetId(), vRecv.size());
         // Ignore unknown commands for extensibility
         LogPrint(BCLog::NET, "Unknown command \"%s\" from peer=%d\n", SanitizeString(strCommand), pfrom->GetId());
     }
