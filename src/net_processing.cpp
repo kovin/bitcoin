@@ -2676,7 +2676,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     {
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
-        LogToDebugFile("%d < block (%d bytes)", pfrom->GetId(), vRecv.size());
+        LogToDebugFile("%d < block (%d bytes)", pfrom->GetId(), pblock->vtx.size());
         LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
 
         bool forceProcessing = false;
